@@ -24,6 +24,8 @@ General utils for annotations from [vipa-turks](https://github.com/Shuai-Xie/vip
 
 > create  a coco dataset of all cigars, the classes are all cigars' class
 
+> you can also filter the most cats in it
+
 **filter_cigar_and_most.py**
 
 > an example of constructing cigars and 3 other most cats
@@ -51,6 +53,9 @@ def write_json(adict, out_path)
 
 # create the nums dict of all cats, but it's initialized zero
 def create_product_nums_dict(product_dict)
+
+# create a nums dict of given cats, and all cat's names given shouldn't be modified
+def get_nums_from_cats(json_path,cats)
 
 # find the missing cats in product_cats.py of given source file
 def get_missing_cats(json_path)
