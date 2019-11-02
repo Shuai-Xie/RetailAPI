@@ -1,0 +1,14 @@
+#btn-group {
+    /*居中*/
+    margin: 20px auto 0;
+    width: 200px;
+    height: 50px;
+}
+
+
+#chart {
+    margin: 0 auto; /*居中*/
+    width: 100%;
+    height: 4000px;
+    /*border: 2px dashed darkgrey;*/
+}
