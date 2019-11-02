@@ -117,6 +117,27 @@ def create_product_nums_dict(product_dict):
     # pprint(product_nums)
     return product_nums
 
+# create a nums dict of given cats, and all cat's names given shouldn't be modified
+def get_nums_from_cats(json_path,cats):
+    product_nums = OrderedDict()
+    for cat in cats:
+        product_nums[cat] = 0
+    
+    with open(json_path, 'r', encoding='UTF-8') as f:
+        img_labels = f.readlines()  # each line is an image label info
+        # print(len(img_labels))
+        for line in img_labels:
+            product_dict = json.loads(line)
+            anns = product_dict['annotation']
+            if anns is None:
+                # print('this line has no anno:',line)
+                continue
+            for ann in anns:
+                label = ann['label'][0]
+                if label in cats:
+                    product_nums[label] += 1
+    return product_nums
+
 # find the missing cats in product_cats.py of given source file
 def get_missing_cats(json_path):
     product_nums = create_product_nums_dict(retail_products)
