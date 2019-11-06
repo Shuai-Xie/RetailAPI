@@ -83,8 +83,57 @@ def build_coco_from_cates(json_path,target_list,info):
 
     return coco_dataset
 
-def build_split_coco(json_path,target_list,info,train_rate=0.7):
-    pass
+# split the input coco to train and test
+def split_coco(coco_path,train_path,test_path,train_ratio=0.7):
+    orign = json.load(open(coco_path,'r',encoding='UTF-8'))
+    train_dataset = {}
+    test_dataset = {}
+
+    train_dataset['info'] = orign['info'] + '_test'
+    train_dataset['licenses'] = orign['licenses']
+    train_dataset['categories'] = orign['categories']
+    train_dataset['images'] = []
+    train_dataset['annotations'] = []
+    test_dataset['info'] = orign['info'] + '_train'
+    test_dataset['licenses'] = orign['licenses']
+    test_dataset['categories'] = orign['categories']
+    test_dataset['images'] = []
+    test_dataset['annotations'] = []
+
+    categories = orign['categories']
+    images = orign['images']
+    annotations = orign['annotations']
+
+    dataset_size = len(images)
+    train_size = int(dataset_size * train_ratio)
+
+    cates = {}
+    for category in categories:
+        cates[category['name']] = category['id']
+    
+    annos = {}
+    for index,annotation in enumerate(annotations):
+        if annos.get(annotation['image_id'],-1) == -1:
+            annos[annotation['image_id']] = []
+        annos[annotation['image_id']].append(index)
+    
+    train_images = images[0:train_size]
+    test_images = images[train_size:]
+
+    for image in train_images:
+        train_dataset['images'].append(image)
+        anno_indexs = annos[image['id']]
+        for anno_index in anno_indexs:
+            train_dataset['annotations'].append(annotations[anno_index])
+
+    for image in test_images:
+        test_dataset['images'].append(image)
+        anno_indexs = annos[image['id']]
+        for anno_index in anno_indexs:
+            test_dataset['annotations'].append(annotations[anno_index])
+
+    write_json(train_dataset,train_path)
+    write_json(test_dataset,test_path)
 
 # convet points of bbox to (x,y,w,h) bbox
 def cvt_pts2xywh(points, img_w=640, img_h=360):
