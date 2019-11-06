@@ -44,7 +44,7 @@ def create_product_nums_dict():
     return product_nums
 
 # build the dataset using the preprocessing data and modified product dict
-def build_dataset(samples_dict,cate_nums):
+def build_dataset(samples_dict,temp_path,cate_nums):
     product_nums = create_product_nums_dict()
     for product_dict in samples_dict:
         anns = product_dict['annotation']
@@ -56,7 +56,7 @@ def build_dataset(samples_dict,cate_nums):
 
     target_list = get_most_name_list(product_nums,cate_nums).keys()  # 获得数量最多的商品列表
     # print(target_list)
-    coco_cigar_and_others = build_coco_from_cates(json_path,target_list,"cigar and others")
+    coco_cigar_and_others = build_coco_from_cates(temp_path,target_list,"cigar and others")
     return coco_cigar_and_others
 
 
@@ -66,9 +66,15 @@ this example uses the functions in utils
 '''
 if __name__ == "__main__":
     json_path = 'data/Retail Products Dataset.json'
+    temp_path = 'data/temp.json'
     result_path = 'data/COCO Cigar And Others.json'
     # change the name of cigars to 'A' and 'a'
     samples = preprocess_samples(json_path)
+
+    with open(temp_path,'w',encoding='UTF-8') as outfile:
+        for sample in samples:
+            outfile.write(json.dumps(sample,ensure_ascii=False) + '\n')
+
     # build the dataset
-    coco = build_dataset(samples,cate_nums=5)
+    coco = build_dataset(samples,temp_path,cate_nums=5)
     write_json(coco,result_path)
