@@ -25,11 +25,15 @@ def build_coco_from_cates(json_path,target_list,info):
         cate_id += 1
     print(categories)
 
+    # print("json_path:" + json_path)
     with open(json_path, 'r', encoding='UTF-8') as f:
         img_labels = f.readlines()  # each line is an image label info
 
         pic_id = 0
         anno_id = 0
+
+        # print("target list:")
+        # print(target_list)
         for line in img_labels:
             product_dict = json.loads(line)
             anns = product_dict['annotation']
@@ -42,8 +46,9 @@ def build_coco_from_cates(json_path,target_list,info):
                 if ann['label'][0] in target_list:
                     checked = True
             if not checked:
+                # print('skiped:',anns[0]['label'][0])
                 continue
-            
+            # print('checked:',anns[0]['label'][0])
             # 生成image信息
             img_w, img_h = anns[0]['imageWidth'], anns[0]['imageHeight']
             image = {
@@ -77,6 +82,9 @@ def build_coco_from_cates(json_path,target_list,info):
             pic_id += 1
 
     return coco_dataset
+
+def build_split_coco(json_path,target_list,info,train_rate=0.7):
+    pass
 
 # convet points of bbox to (x,y,w,h) bbox
 def cvt_pts2xywh(points, img_w=640, img_h=360):
