@@ -14,6 +14,5 @@ if __name__ == "__main__":
     parser.add_argument("--test_path", help="the path of test dataset to be saved",required=True)
     args = parser.parse_args()
 
-
     # json_path = "data/A_coco.json"
     split_coco(args.orign_path,args.train_path,args.test_path)
