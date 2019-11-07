@@ -1,4 +1,4 @@
-import json
+import json,random
 from collections import OrderedDict
 from product_cats import retail_products
 
@@ -128,6 +128,9 @@ def split_coco(coco_path,train_path,test_path,train_ratio=0.7):
         id_images[image['id']] = image
     
     for per_cat_images in cat_images.values():
+
+        random.shuffle(per_cat_images)
+
         dataset_size = len(per_cat_images)
         train_size = int(dataset_size * train_ratio)
         train_images = per_cat_images[0:train_size]
