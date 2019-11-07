@@ -112,25 +112,38 @@ def split_coco(coco_path,train_path,test_path,train_ratio=0.7):
         cates[category['name']] = category['id']
     
     annos = {}
+    cat_images = {}
     for index,annotation in enumerate(annotations):
         if annos.get(annotation['image_id'],-1) == -1:
             annos[annotation['image_id']] = []
+        if cat_images.get(annotation['category_id'],-1) == -1:
+            cat_images[annotation['category_id']] = []
         annos[annotation['image_id']].append(index)
+        cat_images[annotation['category_id']].append(annotation['image_id'])
+
+    # print(cat_images)
     
-    train_images = images[0:train_size]
-    test_images = images[train_size:]
+    id_images = {}
+    for image in images:
+        id_images[image['id']] = image
+    
+    for per_cat_images in cat_images.values():
+        dataset_size = len(per_cat_images)
+        train_size = int(dataset_size * train_ratio)
+        train_images = per_cat_images[0:train_size]
+        test_images = per_cat_images[train_size:]
 
-    for image in train_images:
-        train_dataset['images'].append(image)
-        anno_indexs = annos[image['id']]
-        for anno_index in anno_indexs:
-            train_dataset['annotations'].append(annotations[anno_index])
+        for image_id in train_images:
+            train_dataset['images'].append(id_images[image_id])
+            anno_indexs = annos[image_id]
+            for anno_index in anno_indexs:
+                train_dataset['annotations'].append(annotations[anno_index])
 
-    for image in test_images:
-        test_dataset['images'].append(image)
-        anno_indexs = annos[image['id']]
-        for anno_index in anno_indexs:
-            test_dataset['annotations'].append(annotations[anno_index])
+        for image_id in test_images:
+            test_dataset['images'].append(id_images[image_id])
+            anno_indexs = annos[image_id]
+            for anno_index in anno_indexs:
+                test_dataset['annotations'].append(annotations[anno_index])
 
     write_json(train_dataset,train_path)
     write_json(test_dataset,test_path)
