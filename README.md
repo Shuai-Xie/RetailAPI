@@ -16,6 +16,10 @@ General utils for annotations from [vipa-turks](https://github.com/Shuai-Xie/vip
 >
 > please use **get_all_lost_cats.py** to find them
 
+**train_test_split.py**
+
+> split a coco dataset json file to train&test two json files according a given training rate.
+
 **parse_dataset_stats.py** 
 
 > parse the source file to json file needed by echart visualization 
@@ -41,6 +45,9 @@ General utils for annotations from [vipa-turks](https://github.com/Shuai-Xie/vip
 ```python
 # input source file and cats, get the coco dataset
 def build_coco_from_cates(json_path,target_list,info)
+
+# split the input coco to train and test
+def split_coco(coco_path,train_path,test_path,train_ratio=0.7)
 
 # convet points of bbox to (x,y,w,h) bbox
 def cvt_pts2xywh(points, img_w=640, img_h=360)
