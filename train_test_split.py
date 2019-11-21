@@ -4,7 +4,7 @@ from utils import write_json,split_coco
 
 
 
-# Usage: train_test_split.py --orign_path data/A_coco.json --train_path data/A_train.json --test_path /data/A_test.json
+# Usage: train_test_split.py --orign_path data/A_coco.json --train_path data/A_train.json --test_path data/A_test.json
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
