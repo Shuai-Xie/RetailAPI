@@ -41,6 +41,7 @@ retail_products = OrderedDict({
         'Mevius_A',
         '招财猫_a',
         '红河_a',
+        '土楼_a',
     ],
     'drink': [
         '元气水', 'MR.SODA', '脉动', '名仁_6个柠檬',

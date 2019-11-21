@@ -127,7 +127,7 @@ def split_coco(coco_path,train_path,test_path,train_ratio=0.7):
     for image in images:
         id_images[image['id']] = image
     
-    for per_cat_images in cat_images.values():
+    for (cat_id,per_cat_images) in cat_images.items():
 
         random.shuffle(per_cat_images)
 
@@ -140,13 +140,15 @@ def split_coco(coco_path,train_path,test_path,train_ratio=0.7):
             train_dataset['images'].append(id_images[image_id])
             anno_indexs = annos[image_id]
             for anno_index in anno_indexs:
-                train_dataset['annotations'].append(annotations[anno_index])
+                if annotations[anno_index]['category_id'] == cat_id:
+                    train_dataset['annotations'].append(annotations[anno_index])
 
         for image_id in test_images:
             test_dataset['images'].append(id_images[image_id])
             anno_indexs = annos[image_id]
             for anno_index in anno_indexs:
-                test_dataset['annotations'].append(annotations[anno_index])
+                if annotations[anno_index]['category_id'] == cat_id:
+                    test_dataset['annotations'].append(annotations[anno_index])
 
     write_json(train_dataset,train_path)
     write_json(test_dataset,test_path)
