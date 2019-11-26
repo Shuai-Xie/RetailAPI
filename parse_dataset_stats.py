@@ -1,8 +1,9 @@
 import json
 from pprint import pprint
-from utils import write_json,cvt_echart_json,create_product_nums_dict
+from utils import write_json, cvt_echart_json, create_product_nums_dict
 from collections import OrderedDict
 from product_cats import retail_products
+
 
 def dict_slice(adict, start, end):
     """
@@ -16,6 +17,7 @@ def dict_slice(adict, start, end):
     instances = sum([num for _, num in slice_dict.items()])
     return classes, instances, slice_dict
 
+
 def parse_dataset_stats(json_path):
     dataset_stats = {
         'info': 'Retail Products Dataset',
@@ -26,7 +28,7 @@ def parse_dataset_stats(json_path):
     }
 
     # 1.解析 DataTurks 导出的 标注 json 文件，存入 product_nums
-    # 用 OrderedDict([('利群_A', 0), ('利群_a', 0), ...]) 方面后面累加样例数量
+    # 用 OrderedDict([('利群_A', 0), ('利群_a', 0), ...]) 方便后面累加样例数量
     product_nums = create_product_nums_dict(retail_products)
 
     # 避免 gbk 编码问题
@@ -59,6 +61,7 @@ def parse_dataset_stats(json_path):
         dataset_stats['instances'] = sum([dataset_stats['labels'][s_cat]['instances'] for s_cat in retail_products.keys()])
 
         return dataset_stats
+
 
 '''
 convert source file to echart needed json file
