@@ -1,9 +1,10 @@
-import json,random
+import json, random
 from collections import OrderedDict
 from product_cats import retail_products
 
+
 # input source file and cats, get the coco dataset
-def build_coco_from_cates(json_path,target_list,info):
+def build_coco_from_cates(json_path, target_list, info):
     coco_dataset = {
         "info": info,
         "licenses": [],
@@ -37,7 +38,7 @@ def build_coco_from_cates(json_path,target_list,info):
         for line in img_labels:
             product_dict = json.loads(line)
             anns = product_dict['annotation']
-            if anns is None or len(anns)==0:
+            if anns is None or len(anns) == 0:
                 continue
 
             # 判断该图片是否包含目标类别
@@ -52,14 +53,14 @@ def build_coco_from_cates(json_path,target_list,info):
             # 生成image信息
             img_w, img_h = anns[0]['imageWidth'], anns[0]['imageHeight']
             image = {
-                'coco_url':'',
-                'data_captured':'',
-                'file_name':'/nfs/xs/retail' + product_dict['content'],
-                'flickr_url':'',
-                'id':pic_id,
-                'height':img_h,
-                'width':img_w,
-                'license':1,
+                'coco_url': '',
+                'data_captured': '',
+                'file_name': '/nfs/xs/retail' + product_dict['content'],
+                'flickr_url': '',
+                'id': pic_id,
+                'height': img_h,
+                'width': img_w,
+                'license': 1,
             }
             coco_dataset['images'].append(image)
             # add annotations
@@ -83,9 +84,10 @@ def build_coco_from_cates(json_path,target_list,info):
 
     return coco_dataset
 
+
 # split the input coco to train and test
-def split_coco(coco_path,train_path,test_path,train_ratio=0.7):
-    orign = json.load(open(coco_path,'r',encoding='UTF-8'))
+def split_coco(coco_path, train_path, test_path, train_ratio=0.7):
+    orign = json.load(open(coco_path, 'r', encoding='UTF-8'))
     train_dataset = {}
     test_dataset = {}
 
@@ -110,24 +112,24 @@ def split_coco(coco_path,train_path,test_path,train_ratio=0.7):
     cates = {}
     for category in categories:
         cates[category['name']] = category['id']
-    
+
     annos = {}
     cat_images = {}
-    for index,annotation in enumerate(annotations):
-        if annos.get(annotation['image_id'],-1) == -1:
+    for index, annotation in enumerate(annotations):
+        if annos.get(annotation['image_id'], -1) == -1:
             annos[annotation['image_id']] = []
-        if cat_images.get(annotation['category_id'],-1) == -1:
+        if cat_images.get(annotation['category_id'], -1) == -1:
             cat_images[annotation['category_id']] = []
         annos[annotation['image_id']].append(index)
         cat_images[annotation['category_id']].append(annotation['image_id'])
 
     # print(cat_images)
-    
+
     id_images = {}
     for image in images:
         id_images[image['id']] = image
-    
-    for (cat_id,per_cat_images) in cat_images.items():
+
+    for (cat_id, per_cat_images) in cat_images.items():
 
         random.shuffle(per_cat_images)
 
@@ -150,8 +152,9 @@ def split_coco(coco_path,train_path,test_path,train_ratio=0.7):
                 if annotations[anno_index]['category_id'] == cat_id:
                     test_dataset['annotations'].append(annotations[anno_index])
 
-    write_json(train_dataset,train_path)
-    write_json(test_dataset,test_path)
+    write_json(train_dataset, train_path)
+    write_json(test_dataset, test_path)
+
 
 # convet points of bbox to (x,y,w,h) bbox
 def cvt_pts2xywh(points, img_w=640, img_h=360):
@@ -163,7 +166,8 @@ def cvt_pts2xywh(points, img_w=640, img_h=360):
     xmin, ymin = min([x1, x2, x3, x4]), min([y1, y2, y3, y4])
     xmax, ymax = max([x1, x2, x3, x4]), max([y1, y2, y3, y4])
 
-    return [xmin, ymin, xmax - xmin, ymax - ymin]  # [x,y,w,h]    
+    return [xmin, ymin, xmax - xmin, ymax - ymin]  # [x,y,w,h]
+
 
 # convert float points of image to int points in a image
 def pt_float2int(pt, img_w=640, img_h=360):
@@ -171,12 +175,14 @@ def pt_float2int(pt, img_w=640, img_h=360):
     return max(0, min(round(pt[0] * img_w), img_w - 1)), \
            max(0, min(round(pt[1] * img_h), img_h - 1))
 
+
 # write a json to a file
 def write_json(adict, out_path):
     with open(out_path, 'w', encoding='UTF-8') as json_file:
         # 设置缩进，格式化多行保存; ascii False 保存中文
         json_str = json.dumps(adict, indent=2, ensure_ascii=False)
-        json_file.write(json_str )
+        json_file.write(json_str)
+
 
 # create the nums dict of all cats, but it's initialized zero
 def create_product_nums_dict(product_dict):
@@ -192,12 +198,13 @@ def create_product_nums_dict(product_dict):
     # pprint(product_nums)
     return product_nums
 
+
 # create a nums dict of given cats, and all cat's names given shouldn't be modified
-def get_nums_from_cats(json_path,cats):
+def get_nums_from_cats(json_path, cats):
     product_nums = OrderedDict()
     for cat in cats:
         product_nums[cat] = 0
-    
+
     with open(json_path, 'r', encoding='UTF-8') as f:
         img_labels = f.readlines()  # each line is an image label info
         # print(len(img_labels))
@@ -212,6 +219,7 @@ def get_nums_from_cats(json_path,cats):
                 if label in cats:
                     product_nums[label] += 1
     return product_nums
+
 
 # find the missing cats in product_cats.py of given source file
 def get_missing_cats(json_path):
@@ -234,19 +242,21 @@ def get_missing_cats(json_path):
     names = list(set(names))
     return names
 
+
 # given the product_nums dict, and given the most (count) cat names
-def get_most_name_list(product_nums,count):
+def get_most_name_list(product_nums, count):
     '''
     input:
         @product_nums: the dict of products and their nums
         @count: how many product you wanna slice
         @return: the most top K products
     '''
-    product_sorted = OrderedDict(sorted(product_nums.items(), key=lambda t: t[1],reverse=True))
+    product_sorted = OrderedDict(sorted(product_nums.items(), key=lambda t: t[1], reverse=True))
     # print(product_sorted)
     slice_dict = OrderedDict((k, product_sorted[k]) for k in list(product_sorted.keys())[0:count])
     print(slice_dict)
     return slice_dict
+
 
 # convert the json to echart need json
 def cvt_echart_json(dataset_stats):
