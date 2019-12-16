@@ -111,7 +111,7 @@ $.get('../data/retail_stats_echart.json', function (data) {
                 right: '10%',
                 // containLabel: true
             },
-            { // plaything 这个是你添加的 玩具吗？ 我不小心
+            { // plaything
                 top: '90%',
                 bottom: '6%',
                 left: '60%',
