@@ -84,7 +84,6 @@ def build_coco_from_cates(json_path, target_list, info):
 
     return coco_dataset
 
-
 # split the input coco to train and test
 def split_coco(coco_path, train_path, test_path, train_ratio=0.7):
     orign = json.load(open(coco_path, 'r', encoding='UTF-8'))
@@ -189,7 +188,7 @@ def split_coco_extend(coco_path, train_path, test_path, train_ratio=0.7):
             annos[annotation['image_id']] = []
         annos[annotation['image_id']].append(index)
 
-    print(annos)
+    # print(annos)
 
     random.shuffle(images)
 
@@ -213,6 +212,32 @@ def split_coco_extend(coco_path, train_path, test_path, train_ratio=0.7):
     write_json(train_dataset, train_path)
     write_json(test_dataset, test_path)
 
+def cvt_cigar_super(coco_path, out_path):
+    train_dict = json.load(open(coco_path, 'r', encoding='UTF-8'))
+    categories = train_dict['categories']
+    A_subs = []
+    a_subs = []
+    for cate in categories:
+        if cate['supercategory'] == "条装":
+            A_subs.append(cate['id'])
+        if cate['supercategory'] == "包装":
+            a_subs.append(cate['id'])
+
+    for ann in train_dict['annotations']:
+        if ann['category_id'] in A_subs:
+            ann['category_id'] = 0
+        elif ann['category_id'] in a_subs:
+            ann['category_id'] = 1
+    train_dict['categories'] = [
+        {
+            "id": 0,
+            "name": "A"
+        },
+        {
+            "id": 1,
+            "name": "a"
+        }]
+    write_json(train_dict, out_path)
 
 # convet points of bbox to (x,y,w,h) bbox
 def cvt_pts2xywh(points, img_w=640, img_h=360):
