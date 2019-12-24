@@ -1,4 +1,6 @@
 import json, random
+from utils.box_utils import *
+from utils.io_utils import load_json, write_json
 from collections import OrderedDict
 from product_cats import retail_products
 
@@ -24,7 +26,7 @@ def build_coco_from_cates(json_path, target_list, info):
         categories[cate] = cate_id
         coco_dataset['categories'].append(category_coco)
         cate_id += 1
-    print(categories)
+    # print(categories)
 
     # print("json_path:" + json_path)
     with open(json_path, 'r', encoding='UTF-8') as f:
@@ -70,11 +72,11 @@ def build_coco_from_cates(json_path, target_list, info):
                 if not label in target_list:
                     continue
                 anno_coco = {
-                    "segmentation": [],
-                    "area": [],
+                    "segmentation": cvt_poly_fpts_to_segmentation(ann['points'], img_w, img_h),  # add polygon segmentation
+                    "area": cal_area(ann['points'], img_w, img_h),  # add area
                     "iscrowd": 0,
                     "image_id": pic_id,
-                    "bbox": cvt_pts2xywh(ann['points'], img_w, img_h),
+                    "bbox": cvt_rect_fpts_to_xywh(ann['points'], img_w, img_h),
                     "category_id": categories[label],
                     "id": anno_id
                 }
@@ -84,64 +86,61 @@ def build_coco_from_cates(json_path, target_list, info):
 
     return coco_dataset
 
+
 # split the input coco to train and test
-def split_coco(coco_path, train_path, test_path, train_ratio=0.7):
-    orign = json.load(open(coco_path, 'r', encoding='UTF-8'))
+def split_coco(coco_path, train_path, test_path, val_path,
+               train_ratio=0.7, val_ratio=0.3):
+    origin = load_json(coco_path)
     train_dataset = {}
     test_dataset = {}
+    val_dataset = {}
 
-    train_dataset['info'] = orign['info'] + '_test'
-    train_dataset['licenses'] = orign['licenses']
-    train_dataset['categories'] = orign['categories']
-    train_dataset['images'] = []
-    train_dataset['annotations'] = []
-    test_dataset['info'] = orign['info'] + '_train'
-    test_dataset['licenses'] = orign['licenses']
-    test_dataset['categories'] = orign['categories']
-    test_dataset['images'] = []
-    test_dataset['annotations'] = []
+    train_dataset['info'] = origin['info'] + '_train'
+    test_dataset['info'] = origin['info'] + '_test'
+    val_dataset['info'] = origin['info'] + '_val'
 
-    categories = orign['categories']
-    images = orign['images']
-    annotations = orign['annotations']
+    train_dataset['licenses'] = test_dataset['licenses'] = val_dataset['licenses'] = origin['licenses']
+    train_dataset['categories'] = test_dataset['categories'] = val_dataset['categories'] = origin['categories']
+    train_dataset['images'] = test_dataset['images'] = val_dataset['images'] = []
+    train_dataset['annotations'] = test_dataset['annotations'] = val_dataset['annotations'] = []
 
-    dataset_size = len(images)
-    train_size = int(dataset_size * train_ratio)
+    images = origin['images']
+    annotations = origin['annotations']
 
-    cates = {}
-    for category in categories:
-        cates[category['name']] = category['id']
-
-    annos = {}
-    cat_images = {}
+    annos = {}  # dict { image_id : anns idx }
+    cat_images = {}  # dict { cat_id: image_ids }
     for index, annotation in enumerate(annotations):
         if annos.get(annotation['image_id'], -1) == -1:
-            annos[annotation['image_id']] = []
+            annos[annotation['image_id']] = []  # create ann image_id key
         if cat_images.get(annotation['category_id'], -1) == -1:
-            cat_images[annotation['category_id']] = []
+            cat_images[annotation['category_id']] = []  # create cat image_id key
         annos[annotation['image_id']].append(index)
         cat_images[annotation['category_id']].append(annotation['image_id'])
 
-    # print(cat_images)
-
-    id_images = {}
+    id_images = {}  # dict { image_id: image_dict }
     for image in images:
         id_images[image['id']] = image
 
-    for (cat_id, per_cat_images) in cat_images.items():
+    for (cat_id, per_cat_images) in cat_images.items():  # each cat split
 
         random.shuffle(per_cat_images)
 
         dataset_size = len(per_cat_images)
         train_size = int(dataset_size * train_ratio)
+        val_size = int(dataset_size * val_ratio)
         train_images = per_cat_images[0:train_size]
         test_images = per_cat_images[train_size:]
 
+        # add val
+        val_from_train = int(val_size * train_ratio)
+        val_from_test = val_size - val_from_train
+        val_images = random.sample(train_images, val_from_train) + random.sample(test_images, val_from_test)
+
         for image_id in train_images:
             train_dataset['images'].append(id_images[image_id])
-            anno_indexs = annos[image_id]
+            anno_indexs = annos[image_id]  # anns in an img
             for anno_index in anno_indexs:
-                if annotations[anno_index]['category_id'] == cat_id:
+                if annotations[anno_index]['category_id'] == cat_id:  # judge cat id of anns in an img
                     train_dataset['annotations'].append(annotations[anno_index])
 
         for image_id in test_images:
@@ -151,51 +150,58 @@ def split_coco(coco_path, train_path, test_path, train_ratio=0.7):
                 if annotations[anno_index]['category_id'] == cat_id:
                     test_dataset['annotations'].append(annotations[anno_index])
 
+        for image_id in val_images:
+            val_dataset['images'].append(id_images[image_id])
+            anno_indexs = annos[image_id]
+            for anno_index in anno_indexs:
+                if annotations[anno_index]['category_id'] == cat_id:
+                    val_dataset['annotations'].append(annotations[anno_index])
+
     write_json(train_dataset, train_path)
     write_json(test_dataset, test_path)
+    write_json(val_dataset, val_path)
 
-# split the input coco to train and test
-def split_coco_extend(coco_path, train_path, test_path, train_ratio=0.7):
-    orign = json.load(open(coco_path, 'r', encoding='UTF-8'))
+
+# split the input coco to train/val/test
+def split_coco_extend(coco_path, train_path, test_path, val_path,
+                      train_ratio=0.7, val_ratio=0.3):
+    origin = json.load(open(coco_path, 'r', encoding='UTF-8'))
     train_dataset = {}
     test_dataset = {}
+    val_dataset = {}
 
-    train_dataset['info'] = orign['info'] + '_test'
-    train_dataset['licenses'] = orign['licenses']
-    train_dataset['categories'] = orign['categories']
-    train_dataset['images'] = []
-    train_dataset['annotations'] = []
-    test_dataset['info'] = orign['info'] + '_train'
-    test_dataset['licenses'] = orign['licenses']
-    test_dataset['categories'] = orign['categories']
-    test_dataset['images'] = []
-    test_dataset['annotations'] = []
+    train_dataset['info'] = origin['info'] + '_train'
+    test_dataset['info'] = origin['info'] + '_test'
+    val_dataset['info'] = origin['info'] + '_val'
 
-    categories = orign['categories']
-    images = orign['images']
-    annotations = orign['annotations']
+    train_dataset['licenses'] = test_dataset['licenses'] = val_dataset['licenses'] = origin['licenses']
+    train_dataset['categories'] = test_dataset['categories'] = val_dataset['categories'] = origin['categories']
+    train_dataset['images'] = test_dataset['images'] = val_dataset['images'] = []
+    train_dataset['annotations'] = test_dataset['annotations'] = val_dataset['annotations'] = []
+
+    images = origin['images']
+    annotations = origin['annotations']
 
     dataset_size = len(images)
     train_size = int(dataset_size * train_ratio)
+    val_size = int(dataset_size * val_ratio)
 
-    cates = {}
-    for category in categories:
-        cates[category['name']] = category['id']
-
-    annos = {}
+    # dict { image_id : anns idx }
+    annos = {}  # key: image_id; val: [ann indx in annotations]
     for index, annotation in enumerate(annotations):
         if annos.get(annotation['image_id'], -1) == -1:
-            annos[annotation['image_id']] = []
+            annos[annotation['image_id']] = []  # create key:[]
         annos[annotation['image_id']].append(index)
-
-    # print(annos)
 
     random.shuffle(images)
 
     train_images = images[0:train_size]
     test_images = images[train_size:]
-    print(len(train_images))
-    print(len(test_images))
+
+    # add val
+    val_from_train = int(val_size * train_ratio)
+    val_from_test = val_size - val_from_train
+    val_images = random.sample(train_images, val_from_train) + random.sample(test_images, val_from_test)
 
     for img in train_images:
         train_dataset['images'].append(img)
@@ -209,8 +215,16 @@ def split_coco_extend(coco_path, train_path, test_path, train_ratio=0.7):
         for anno_index in anno_indexs:
             test_dataset['annotations'].append(annotations[anno_index])
 
+    for img in val_images:
+        val_dataset['images'].append(img)
+        anno_indexs = annos[img['id']]
+        for anno_index in anno_indexs:
+            val_dataset['annotations'].append(annotations[anno_index])
+
     write_json(train_dataset, train_path)
     write_json(test_dataset, test_path)
+    write_json(val_dataset, val_path)
+
 
 def cvt_cigar_super(coco_path, out_path):
     train_dict = json.load(open(coco_path, 'r', encoding='UTF-8'))
@@ -229,42 +243,10 @@ def cvt_cigar_super(coco_path, out_path):
         elif ann['category_id'] in a_subs:
             ann['category_id'] = 1
     train_dict['categories'] = [
-        {
-            "id": 0,
-            "name": "A"
-        },
-        {
-            "id": 1,
-            "name": "a"
-        }]
+        {"id": 0, "name": "A"},
+        {"id": 1, "name": "a"}
+    ]
     write_json(train_dict, out_path)
-
-# convet points of bbox to (x,y,w,h) bbox
-def cvt_pts2xywh(points, img_w=640, img_h=360):
-    x1, y1 = pt_float2int(points[0], img_w, img_h)  # 左上
-    x2, y2 = pt_float2int(points[1], img_w, img_h)  # 右上
-    x3, y3 = pt_float2int(points[2], img_w, img_h)  # 右下
-    x4, y4 = pt_float2int(points[3], img_w, img_h)  # 右下
-
-    xmin, ymin = min([x1, x2, x3, x4]), min([y1, y2, y3, y4])
-    xmax, ymax = max([x1, x2, x3, x4]), max([y1, y2, y3, y4])
-
-    return [xmin, ymin, xmax - xmin, ymax - ymin]  # [x,y,w,h]
-
-
-# convert float points of image to int points in a image
-def pt_float2int(pt, img_w=640, img_h=360):
-    # x,y
-    return max(0, min(round(pt[0] * img_w), img_w - 1)), \
-           max(0, min(round(pt[1] * img_h), img_h - 1))
-
-
-# write a json to a file
-def write_json(adict, out_path):
-    with open(out_path, 'w', encoding='UTF-8') as json_file:
-        # 设置缩进，格式化多行保存; ascii False 保存中文
-        json_str = json.dumps(adict, indent=2, ensure_ascii=False)
-        json_file.write(json_str)
 
 
 # create the nums dict of all cats, but it's initialized zero
