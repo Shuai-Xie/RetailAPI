@@ -226,6 +226,7 @@ def split_coco_extend(coco_path, train_path, test_path, val_path,
     write_json(val_dataset, val_path)
 
 
+
 def cvt_cigar_super(coco_path, out_path):
     train_dict = json.load(open(coco_path, 'r', encoding='UTF-8'))
     categories = train_dict['categories']
