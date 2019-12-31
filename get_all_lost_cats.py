@@ -1,6 +1,4 @@
-from utils import get_missing_cats
-
-
+from utils.dataset_utils import get_missing_cats
 
 '''
 used to find the missing cats in product_cats.py

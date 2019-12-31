@@ -2,7 +2,8 @@ import json
 import re
 from collections import OrderedDict
 from product_cats import retail_products
-from utils import get_most_name_list, build_coco_from_cates, write_json
+from utils.dataset_utils import get_most_name_list, build_coco_from_cates
+from utils.io_utils import write_json
 
 cigar_cats = retail_products['cigar']
 

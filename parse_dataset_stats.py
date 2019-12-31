@@ -1,6 +1,6 @@
 import json
 from pprint import pprint
-from utils import write_json, cvt_echart_json, create_product_nums_dict
+from utils.dataset_utils import write_json, cvt_echart_json, create_product_nums_dict
 from collections import OrderedDict
 from product_cats import retail_products
 
