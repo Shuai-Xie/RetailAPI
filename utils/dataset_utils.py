@@ -226,7 +226,6 @@ def split_coco_extend(coco_path, train_path, test_path, val_path,
     write_json(val_dataset, val_path)
 
 
-
 def cvt_cigar_super(coco_path, out_path):
     train_dict = json.load(open(coco_path, 'r', encoding='UTF-8'))
     categories = train_dict['categories']
@@ -248,21 +247,6 @@ def cvt_cigar_super(coco_path, out_path):
         {"id": 1, "name": "a"}
     ]
     write_json(train_dict, out_path)
-
-
-# create the nums dict of all cats, but it's initialized zero
-def create_product_nums_dict(product_dict):
-    """
-    :return: OrderedDict([('利群_A', 0), ('利群_a', 0), ...])
-    """
-    # 有序字典，key 遵从 super_cat list 顺序，顺序输出，方便查看
-    # 注意 OrderedDict 虽然是有序的，但是不能 slice 截取数据
-    product_nums = OrderedDict()
-    for _, cats in product_dict.items():
-        for cat in cats:
-            product_nums[cat] = 0
-    # pprint(product_nums)
-    return product_nums
 
 
 # create a nums dict of given cats, and all cat's names given shouldn't be modified
@@ -322,23 +306,3 @@ def get_most_name_list(product_nums, count):
     slice_dict = OrderedDict((k, product_sorted[k]) for k in list(product_sorted.keys())[0:count])
     print(slice_dict)
     return slice_dict
-
-
-# convert the json to echart need json
-def cvt_echart_json(dataset_stats):
-    # echart json format
-    root = {
-        'name': dataset_stats['info'],
-        'images': dataset_stats['images'],
-        'classes': dataset_stats['classes'],
-        'instances': dataset_stats['instances'],
-        'children': [],
-    }
-    for super_cat, super_cat_dict in dataset_stats['labels'].items():
-        child = {
-            'name': super_cat,
-            'value': super_cat_dict['instances'],
-            'children': [{'name': cat, 'value': num} for cat, num in super_cat_dict['labels'].items()]
-        }
-        root['children'].append(child)
-    write_json(root, 'data/retail_stats_echart.json')
