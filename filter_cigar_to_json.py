@@ -23,17 +23,20 @@ def filter_cigars_to_json():
             for line in lines:
                 product_dict = json.loads(line)
                 anns = product_dict['annotation']
+                cigar_anns = []
                 if anns is None:
                     continue
-                has_cigar = False
+                # filter cigar anns from other cats
                 for ann in anns:
                     cat = ann['label'][0]
                     # 要设置结尾匹配，不然 BIG_ROLL 这样也会匹配到
                     if re.match('^.+_[A-Z]$', cat) or re.match('^.+_[a-z]$', cat):
-                        has_cigar = True
+                        cigar_anns.append(ann)
                         cnt += 1
-                        break
-                if has_cigar:
+                if len(cigar_anns) > 0:
+                    product_dict['annotation'] = cigar_anns
+                    product_dict['extras'] = 'null'  # 防止 str 将 null 转成 None 对象
+                    line = str(product_dict).replace("'", "\"") + '\n'
                     fw.write(line)
         print('cigar img:', cnt)
 
@@ -94,5 +97,5 @@ def get_cigar_cats_and_other_cats():
 
 
 if __name__ == '__main__':
-    # filter_cigars_to_json()
-    get_cigar_cats_and_other_cats()
+    filter_cigars_to_json()
+    # get_cigar_cats_and_other_cats()
