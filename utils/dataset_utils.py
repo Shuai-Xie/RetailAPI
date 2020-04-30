@@ -4,7 +4,6 @@ from utils.io_utils import load_json, write_json
 from collections import OrderedDict
 from product_cats import retail_products
 
-
 # input source file and cats, get the coco dataset
 def build_coco_from_cates(json_path, target_list, info):
     coco_dataset = {
@@ -101,8 +100,12 @@ def split_coco(coco_path, train_path, test_path, val_path,
 
     train_dataset['licenses'] = test_dataset['licenses'] = val_dataset['licenses'] = origin['licenses']
     train_dataset['categories'] = test_dataset['categories'] = val_dataset['categories'] = origin['categories']
-    train_dataset['images'] = test_dataset['images'] = val_dataset['images'] = []
-    train_dataset['annotations'] = test_dataset['annotations'] = val_dataset['annotations'] = []
+    train_dataset['images'] = []
+    test_dataset['images'] = []
+    val_dataset['images'] = []
+    train_dataset['annotations'] = []
+    test_dataset['annotations'] = []
+    val_dataset['annotations'] = []
 
     images = origin['images']
     annotations = origin['annotations']
@@ -176,8 +179,12 @@ def split_coco_extend(coco_path, train_path, test_path, val_path,
 
     train_dataset['licenses'] = test_dataset['licenses'] = val_dataset['licenses'] = origin['licenses']
     train_dataset['categories'] = test_dataset['categories'] = val_dataset['categories'] = origin['categories']
-    train_dataset['images'] = test_dataset['images'] = val_dataset['images'] = []
-    train_dataset['annotations'] = test_dataset['annotations'] = val_dataset['annotations'] = []
+    train_dataset['images'] = []
+    test_dataset['images'] = []
+    val_dataset['images'] = []
+    train_dataset['annotations'] = []
+    test_dataset['annotations'] = []
+    val_dataset['annotations'] = []
 
     images = origin['images']
     annotations = origin['annotations']
